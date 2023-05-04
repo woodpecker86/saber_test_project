@@ -1,4 +1,3 @@
-import os.path
 from os import path
 from typing import Dict, Union
 
@@ -18,7 +17,7 @@ def get_task_set() -> Dict[str, list]:
 def get_file_content(name: str) -> Union[Dict[str, list], None]:
     file_path = path.join(BUILD_PATH, name)
     try:
-        data = yaml.safe_load(open(file_path, 'r'))
+        data = yaml.safe_load(open(file_path))
     except yaml.YAMLError as exc:
         raise exc
     else:

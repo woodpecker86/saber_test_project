@@ -8,17 +8,19 @@ from starlette.routing import Route
 
 from .settings import DEBUG
 from .exceptions import exception_handlers
+from .models import set_context, BUILDS
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: Starlette):
-    print('start')
+    set_context()
     yield
     print('stop')
 
 
 async def get_tasks(receive: Request):
-    # print(await receive.json())
+    data = await receive.json()
+    print(data)
     return JSONResponse({'Tasks': []})
 
 
