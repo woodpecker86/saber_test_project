@@ -20,7 +20,11 @@ async def lifespan(app: Starlette):
 
 async def get_tasks(receive: Request):
     data = await receive.json()
-    print(data)
+    try:
+        build = BUILDS[data['build']]
+    except KeyError:
+        return JSONResponse({'Status': 'Error',
+                             'Result': 'Not found such build'})
     return JSONResponse({'Tasks': []})
 
 
