@@ -2,13 +2,14 @@
 import json
 
 from src.main import build_app as app
+from .samples import FORWARD_INTEREST_TASKS
 
 
 def test_get_tasks_for_forward_interest(client):
     url = app.url_path_for('get_tasks')
     response = client.post(url, content=json.dumps({'build': 'forward_interest'}))
     assert response.status_code == 200
-    # assert response.json() ==
+    assert response.json() == {'Tasks': FORWARD_INTEREST_TASKS}
 
 
 def test_get_tasks_for_unknown_build(client):

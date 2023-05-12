@@ -1,5 +1,5 @@
+import logging
 import contextlib
-from datetime import datetime
 
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -8,14 +8,19 @@ from starlette.routing import Route
 
 from .settings import DEBUG
 from .exceptions import exception_handlers
-from .models import set_context, BUILDS
+from .models import set_context
+
+BUILDS = {}
+
+logging.basicConfig(format="%(levelname)s:%(name)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: Starlette):
-    set_context()
+    global BUILDS
+    BUILDS = set_context()
     yield
-    print('stop')
 
 
 async def get_tasks(receive: Request):
@@ -25,7 +30,10 @@ async def get_tasks(receive: Request):
     except KeyError:
         return JSONResponse({'Status': 'Error',
                              'Result': 'Not found such build'})
-    return JSONResponse({'Tasks': []})
+    except TypeError:
+        return JSONResponse({'Status': 'Error',
+                             'Result': 'Something is wrong with data'})
+    return JSONResponse({'Tasks': build.get_ordered_tasks()})
 
 
 routes = [Route('/get_tasks', get_tasks, methods=['POST'])]

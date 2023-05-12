@@ -1,10 +1,12 @@
-from typing import List, NamedTuple, Iterable, Set
+import logging
+from typing import List, NamedTuple, Iterable, Set, Dict, Union
 
 from .yaml_parse import get_task_set, get_build_set
 
 
 TASKS = {}
-BUILDS = {}
+
+logger = logging.getLogger(__name__)
 
 
 class TaskList:
@@ -39,26 +41,30 @@ class Build:
     def get_ordered_tasks(self) -> List[str]:
         if self.is_ordered_tasks_empty():
             for task in self.tasks:
-                if task.dependencies:
-                    self.add_task_dependencies(task)
-                self._ordered_tasks.append(task.name)
+                self.add_task_dependencies(task)
         return self._ordered_tasks
 
     def is_ordered_tasks_empty(self) -> bool:
         return not self._ordered_tasks
 
     def add_task_dependencies(self, task: Task) -> None:
-        if not task.dependencies:
+        if task.dependencies:
+            for dependency in task.dependencies:
+                self.add_task_dependencies(TASKS[dependency])
+        if task.name not in self._ordered_tasks:
             self._ordered_tasks.append(task.name)
-        for dependency in task.dependencies:
-            self.add_task_dependencies(TASKS[dependency])
 
 
-def set_context() -> None:
-    global TASKS, BUILDS
-    raw_data: dict = get_task_set()
-    TASKS = {task['name']: Task(*task.values()) for task in raw_data['tasks']}
-    raw_data: dict = get_build_set()
-    BUILDS = {build['name']: Build(*build.values()) for build in raw_data['builds']}
+def set_context() -> Union[Dict[str, List[Task]], None]:
+    global TASKS
+    try:
+        raw_data: dict = get_task_set()
+        TASKS = {task['name']: Task(*task.values()) for task in raw_data['tasks']}
+        raw_data: dict = get_build_set()
+        builds = {build['name']: Build(*build.values()) for build in raw_data['builds']}
+    except TypeError as exc:
+        logger.warning(f"Can't set context. Something's wrong with data files.")
+    else:
+        return builds
 
 
